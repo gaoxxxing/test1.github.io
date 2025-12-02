@@ -171,10 +171,10 @@
       return newId.toString();
     }
     
-    // === 修改点 4：修改计时器函数，使其不再更新界面元素 ===
+    // === 修改点 4：修改计时器函数，使其不再更新界面元素，同时将每题时间改为3分钟（180秒） ===
     function startTimer() {
-      let timeLeft = 60;
-      // timerDisplay.textContent = '01:00';
+      let timeLeft = 180; // 改为3分钟（180秒）
+      // timerDisplay.textContent = '03:00'; // 移除界面显示，仅保留计时逻辑
       // timerDisplay.classList.remove('text-yellow-500');
 
       if (questionTimer) {
@@ -187,7 +187,7 @@
         // const seconds = timeLeft % 60;
         // timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         
-        // if (timeLeft <= 10) {
+        // if (timeLeft <= 30) { // 剩余30秒时提示（移除界面显示，仅保留计时逻辑）
         //     timerDisplay.classList.add('text-yellow-500');
         // }
 
@@ -250,7 +250,7 @@
         if (isAutoSubmit && userAns.b === '') isCorrect = false;
       }
       
-      const timeSpent = isAutoSubmit ? 60 : Math.round((new Date() - startTime) / 1000);
+      const timeSpent = isAutoSubmit ? 180 : Math.round((new Date() - startTime) / 1000); // 自动提交时记录为3分钟（180秒）
       studentAnswers.push({
         qIndex: currentQ + 1, userAns, correctAns: qData.answer, isCorrect, timeSpent, type: qData.type
       });
