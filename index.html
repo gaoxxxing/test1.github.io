@@ -141,7 +141,6 @@
     // 全局状态
     let currentQ = 0;
     let startTime;
-    let quizStartTime;
     let studentAnswers = [];
     let studentId;
     let questionTimer;
@@ -171,40 +170,30 @@
       return newId.toString();
     }
     
-    // === 修改点 4：修改计时器函数，使其不再更新界面元素，同时将每题时间改为3分钟（180秒） ===
+    // === 修改点 4：修改计时器函数，使其每道题时间为3分钟（180秒） ===
     function startTimer() {
-      let timeLeft = 180; // 改为3分钟（180秒）
-      // timerDisplay.textContent = '03:00'; // 移除界面显示，仅保留计时逻辑
-      // timerDisplay.classList.remove('text-yellow-500');
-
+      let timeLeft = 180; // 每道题3分钟（180秒）
+      
       if (questionTimer) {
         clearInterval(questionTimer);
       }
 
       questionTimer = setInterval(() => {
         timeLeft--;
-        // const minutes = Math.floor(timeLeft / 60);
-        // const seconds = timeLeft % 60;
-        // timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         
-        // if (timeLeft <= 30) { // 剩余30秒时提示（移除界面显示，仅保留计时逻辑）
-        //     timerDisplay.classList.add('text-yellow-500');
-        // }
-
         if (timeLeft <= 0) {
           clearInterval(questionTimer);
-          submitAnswer(true);
+          submitAnswer(true); // 时间到，自动提交
         }
       }, 1000);
     }
 
-    // === 修改点 5：修改题目初始化函数，使其不再更新题目计数 ===
+    // === 修改点 5：修改题目初始化函数 ===
     function initQuestion(qIndex) {
       questionImg.src = questions[qIndex].img;
-      // questionCounter.textContent = `${qIndex + 1} / ${questions.length}`;
       createInput(questions[qIndex].type);
-      startTime = new Date();
-      startTimer();
+      startTime = new Date(); // 记录当前题目的开始时间
+      startTimer(); // 开始当前题目的计时
     }
 
     function createInput(type) {
@@ -250,7 +239,20 @@
         if (isAutoSubmit && userAns.b === '') isCorrect = false;
       }
       
-      const timeSpent = isAutoSubmit ? 180 : Math.round((new Date() - startTime) / 1000); // 自动提交时记录为3分钟（180秒）
+      // === 修改点 6：计算每道题的用时 ===
+      const endTime = new Date();
+      let timeSpent = Math.round((endTime - startTime) / 1000);
+      
+      // 确保每道题用时不超过180秒
+      if (timeSpent > 180) {
+        timeSpent = 180;
+      }
+      
+      // 如果是自动提交（时间到180秒），则直接记录为180秒
+      if (isAutoSubmit) {
+        timeSpent = 180;
+      }
+      
       studentAnswers.push({
         qIndex: currentQ + 1, userAns, correctAns: qData.answer, isCorrect, timeSpent, type: qData.type
       });
@@ -311,19 +313,21 @@
         myRecords.appendChild(recordEl);
       });
 
-      const totalTime = Math.round((new Date() - quizStartTime) / 1000);
+      // === 修改点 7：总时间改为每道题用时之和 ===
+      const totalTime = studentAnswers.reduce((total, ans) => total + ans.timeSpent, 0);
       const correctCount = studentAnswers.filter(ans => ans.isCorrect).length;
       totalTimeEl.textContent = formatTime(totalTime);
       correctRateEl.textContent = `${correctCount}/${questions.length} (${Math.round(correctCount / questions.length * 100)}%)`;
     }
 
     function saveRecord() {
-      const totalTime = Math.round((new Date() - quizStartTime) / 1000);
+      // === 修改点 8：保存记录时也使用每道题用时之和 ===
+      const totalTime = studentAnswers.reduce((total, ans) => total + ans.timeSpent, 0);
       const correctCount = studentAnswers.filter(ans => ans.isCorrect).length;
       const record = {
         studentId,
         completedAt: new Date().toLocaleString(),
-        totalTime,
+        totalTime, // 这里是每道题用时之和
         correctCount,
         answers: studentAnswers
       };
@@ -383,7 +387,6 @@
         studentId = generateNewStudentId();
         startScreen.classList.add('hidden');
         quizArea.classList.remove('hidden');
-        quizStartTime = new Date();
         initQuestion(0);
       });
 
@@ -393,7 +396,6 @@
         studentAnswers = [];
         finishModal.classList.add('hidden');
         quizArea.classList.remove('hidden');
-        quizStartTime = new Date();
         initQuestion(currentQ);
       });
 
